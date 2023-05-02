@@ -1,0 +1,29 @@
+blueprint:
+  name: Rolladen Steuerung
+  description: Steuert die Rolläden basierend auf diversen Werten
+  domain: automation
+  input:
+    schalter_auf:
+      name: Schalter Auf
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class: sensor
+    rolladen:
+      name: Rolladen
+      selector:
+        target:
+          entity:
+            domain: cover
+
+mode: restart
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input schalter_auf
+action:
+  - service: cover.close_cover
+    data: {}
+    target:
+      area_id: rolladen
