@@ -8,7 +8,7 @@ blueprint:
       name: Schalter
       selector:
         entity:
-          device_class: sensor
+          domain: sensor
     rolladen:
       name: Rolladen
       selector:
