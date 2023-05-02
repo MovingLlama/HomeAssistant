@@ -2,12 +2,12 @@ blueprint:
   name: Rolladen Steuerung
   description: Steuert die Rolläden basierend auf diversen Werten
   domain: automation
+  source_url: https://github.com/MovingLlama/HomeAssistant/blob/master/Blueprints/rolladen.yaml
   input:
     schalter_auf:
-      name: Schalter Auf
+      name: Schalter
       selector:
         entity:
-          domain: binary_sensor
           device_class: sensor
     rolladen:
       name: Rolladen
@@ -25,5 +25,4 @@ trigger:
 action:
   - service: cover.close_cover
     data: {}
-    target:
-      area_id: rolladen
+    target: !input rolladen
