@@ -1,16 +1,25 @@
 blueprint:
-  name: Rolladen Steuerung
-  description: Steuert die Rolläden basierend auf diversen Werten
+  name: Cover Controll
+  description: Controlling Covers based on Sun state, Wind, Rain and manual imput.
   domain: automation
   source_url: https://github.com/MovingLlama/HomeAssistant/blob/master/Blueprints/rolladen.yaml
   input:
-    schalter_auf:
-      name: Schalter
+    switch:
+      name: Switch
+      description: Entity that is changing Values, testet with Ikea tradfri via zigbee2mqtt
       selector:
         entity:
           domain: sensor
-    rolladen:
-      name: Rolladen
+    up:
+      name: Up Value
+      description: Value for opening covers
+      default: up
+    down:
+      name: Down Value
+      description: Value for closing covers
+      default: down
+    cover:
+      name: Cover
       selector:
         target:
           entity:
@@ -21,8 +30,8 @@ max_exceeded: silent
 
 trigger:
   - platform: state
-    entity_id: !input schalter_auf
+    entity_id: !input switch
 action:
   - service: cover.close_cover
     data: {}
-    target: !input rolladen
+    target: !input cover
