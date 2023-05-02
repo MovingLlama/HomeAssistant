@@ -42,5 +42,5 @@ action:
         target: !input cover
     else:
       - service: cover.close_cover
-        date: {}
+        data: {}
         target: !input cover
