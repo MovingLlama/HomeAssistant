@@ -32,6 +32,15 @@ trigger:
   - platform: state
     entity_id: !input switch
 action:
-  - service: cover.close_cover
-    data: {}
-    target: !input cover
+  - if:
+    - condition: state
+      entity_id: !input switch
+      state : !input up
+    then:
+      - service: cover.open_cover
+        data: {}
+        target: !input cover
+    else:
+      - service: cover.close_cover
+        date: {}
+        target: !input cover
