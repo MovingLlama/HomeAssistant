@@ -41,13 +41,6 @@ blueprint:
           entity:
           - domain:
             - cover
-    stop_cover:
-      name: Stop Cover
-      description: Cover to stop if window is opened
-      selector:
-        entity:
-          domain:
-          - cover
     sunrise_offset:
       name: Offset Sunrise
       description: Offset for Sunrise time 
@@ -122,11 +115,6 @@ trigger:
     event: sunrise
     offset: !input sunrise_offset
     id: dynamic
-  - platform: state
-    entity_id:
-      - !input stop_cover
-    id: stop
-    from: open
   - platform: numeric_state
     entity_id:
       - !input outside_temperature
@@ -155,18 +143,6 @@ action:
           - service: cover.close_cover
             data: {}
             target: !input cover
-
-      - conditions:
-          - condition: trigger
-            id: stop
-        sequence:
-          - service: cover.stop_cover
-            data: {}
-            target: !input cover
-          - service: cover.open_cover
-            data: {}
-            target: !input cover
-
       - conditions:
           - condition: trigger
             id: temp_close
