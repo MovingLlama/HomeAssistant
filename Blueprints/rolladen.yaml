@@ -60,13 +60,6 @@ blueprint:
       default: "- 00:20:00"
       selector:
         text:
-    window_contact:
-      name: Window Contact
-      description: If set automation will not trigger if window is opened and will open the window if triggered
-      selector:
-        entity:
-          domain: binary_sensor
-          device_class: door
     outside_temperature:
       name: Outside Temerature
       description: Outside Temperature for heating automation
@@ -130,16 +123,6 @@ trigger:
     offset: !input sunrise_offset
     id: dynamic
   - platform: state
-    entity_id: 
-      - !input window_contact
-    to: "on"
-    id: up
-  - platform: state
-    entity_id:
-      - !input window_contact
-    to: "off"
-    id: dynamic
-  - platform: state
     entity_id:
       - !input stop_cover
     id: stop
@@ -168,9 +151,6 @@ action:
       - conditions:
           - condition: trigger
             id: down
-          - condition: state
-            entity_id: !input window_contact
-            state: "off"
         sequence:
           - service: cover.close_cover
             data: {}
@@ -179,9 +159,6 @@ action:
       - conditions:
           - condition: trigger
             id: stop
-          - condition: state
-            entity_id: !input window_contact
-            state: "on"
         sequence:
           - service: cover.stop_cover
             data: {}
@@ -193,9 +170,6 @@ action:
       - conditions:
           - condition: trigger
             id: temp_close
-          - condition: state
-            entity_id: !input window_contact
-            state: "off"
           - condition: sun
             before: sunset
             after: sunrise
@@ -229,9 +203,6 @@ action:
                     after: sunset
                     before_offset: !input sunrise_offset
                     after_offset: !input sunset_offset
-                  - condition: state
-                    entity_id: !input window_contact
-                    state: "off"
                 sequence:
                   - service: cover.close_cover
                     data: {}
