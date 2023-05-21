@@ -1,0 +1,238 @@
+blueprint:
+  name: Rolladen Steuerung mit Fentersensor
+  description: Controlling Covers based on Sun state, Wind, Rain and manual imput.
+  domain: automation
+  source_url: https://raw.githubusercontent.com/MovingLlama/HomeAssistant/master/Blueprints/rolladen_mit_fenstersensor.yaml
+  input:
+    switch:
+      name: Switch 1
+      description: Entity that is changing Values, testet with Ikea tradfri via zigbee2mqtt
+      selector:
+        entity:
+          domain:
+          - sensor
+    up:
+      name: Up Value Switch 1
+      description: Value for opening covers
+      default: up
+    down:
+      name: Down Value Switch 1
+      description: Value for closing covers
+      default: down
+    switch_2:
+      name: Switch 2
+      selector:
+        entity:
+          domain:
+          - sensor
+    up_2:
+      name: Up Value Switch 2
+      description: Value for opening covers
+      default: up
+    down_2:
+      name: Down Value Switch 2
+      description: Value for closing covers
+      default: down
+    cover:
+      name: Cover
+      description: select the cover to close
+      selector:
+        target:
+          entity:
+          - domain:
+            - cover
+    stop_cover:
+      name: Stop Cover
+      description: Cover to stop if window is opened
+      selector:
+        entity:
+          domain:
+          - cover
+    sunrise_offset:
+      name: Offset Sunrise
+      description: Offset for Sunrise time 
+      default: 00:20:00
+      selector:
+        text:
+    sunset_offset:
+      name: Offset Sunset
+      description: Offset for Sunset time
+      default: "- 00:20:00"
+      selector:
+        text:
+    window_contact:
+      name: Window Contact
+      description: If set automation will not trigger if window is opened and will open the window if triggered
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class: door
+    outside_temperature:
+      name: Outside Temerature
+      description: Outside Temperature for heating automation
+      default:
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+    outside_control_temp:
+      name: Offset Temperature Close
+      description: Temperature at witch the blindes are opening
+      default: 15
+      selector:
+        number:
+         max: 40
+         min: 10
+         step: 1
+         unit_of_measurement: °C
+         mode: slider
+    outside_control_close:
+      name: Offset Temperature Closed
+      description: How far will it be closeing the blindes when hot
+      default: 80
+      selector:
+        number:
+         max: 100
+         min: 0
+         step: 1
+         unit_of_measurement: '%'
+         mode: slider
+mode: restart
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id:
+      - !input switch
+    to: !input up
+    id: up
+  - platform: state
+    entity_id:
+      - !input switch
+    to: !input down
+    id: down
+  - platform: state
+    entity_id:
+      - !input switch_2
+    to: !input up_2
+    id: up
+  - platform: state
+    entity_id:
+      - !input switch_2
+    to: !input down_2
+    id: down
+  - platform: sun
+    event: sunset
+    id: down
+    offset: !input sunset_offset
+  - platform: sun
+    event: sunrise
+    offset: !input sunrise_offset
+    id: dynamic
+  - platform: state
+    entity_id: 
+      - !input window_contact
+    to: "on"
+    id: up
+  - platform: state
+    entity_id:
+      - !input window_contact
+    to: "off"
+    id: dynamic
+  - platform: state
+    entity_id:
+      - !input stop_cover
+    id: stop
+    from: open
+  - platform: numeric_state
+    entity_id:
+      - !input outside_temperature
+    above: !input outside_control_temp
+    id: temp_close
+  - platform: numeric_state
+    entity_id:
+      - !input outside_temperature
+    below: !input outside_control_temp
+    id: dynamic
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: up
+        sequence:
+          - service: cover.open_cover
+            data: {}
+            target: !input cover
+
+      - conditions:
+          - condition: trigger
+            id: down
+          - condition: state
+            entity_id: !input window_contact
+            state: "off"
+        sequence:
+          - service: cover.close_cover
+            data: {}
+            target: !input cover
+
+      - conditions:
+          - condition: trigger
+            id: stop
+          - condition: state
+            entity_id: !input window_contact
+            state: "on"
+        sequence:
+          - service: cover.stop_cover
+            data: {}
+            target: !input cover
+          - service: cover.open_cover
+            data: {}
+            target: !input cover
+
+      - conditions:
+          - condition: trigger
+            id: temp_close
+          - condition: state
+            entity_id: !input window_contact
+            state: "off"
+          - condition: sun
+            before: sunset
+            after: sunrise
+            before_offset: !input sunset_offset
+            after_offset: !input sunrise_offset
+        sequence:
+          - service: cover.set_cover_position
+            data:
+              position: !input outside_control_close
+            target: !input cover
+
+      - conditions:
+          - condition: trigger
+            id: dynamic
+        sequence:
+          - choose:
+              - conditions:
+                - condition: sun
+                  before: sunset
+                  after: sunrise
+                  before_offset: !input sunset_offset
+                  after_offset: !input sunrise_offset
+                sequence:
+                  - service: cover.open_cover
+                    data: {}
+                    target: !input cover
+
+              - conditions:
+                  - condition: sun
+                    before: sunrise
+                    after: sunset
+                    before_offset: !input sunrise_offset
+                    after_offset: !input sunset_offset
+                  - condition: state
+                    entity_id: !input window_contact
+                    state: "off"
+                sequence:
+                  - service: cover.close_cover
+                    data: {}
+                    target: !input cover
