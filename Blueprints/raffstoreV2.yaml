@@ -1,0 +1,336 @@
+blaufdruck:
+  name: Raffstoresteuerung
+  description: Steuerung der Raffstores basierend auf Sonnenstand, Wind, Regen und manueller Eingabe.
+  domain: automation
+  source_url: https://raw.githubusercontent.com/MovingLlama/HomeAssistant/master/Blueprints/raffstore.yaml
+  input:
+    schalter:
+      name: Schalter 1
+      description: Entität, die Werte ändert, getestet mit Ikea Tradfri über Zigbee2mqtt.
+      selector:
+        entity:
+          domain:
+          - sensor
+          multiple: false
+    hoch:
+      name: Wert für Öffnen (Schalter 1)
+      description: Wert zum Öffnen der Raffstores.
+      default: hoch
+    runter:
+      name: Wert für Schließen (Schalter 1)
+      description: Wert zum Schließen der Raffstores.
+      default: runter
+    schalter_2:
+      name: Schalter 2
+      selector:
+        entity:
+          domain:
+          - sensor
+          multiple: false
+    hoch_2:
+      name: Wert für Öffnen (Schalter 2)
+      description: Wert zum Öffnen der Raffstores.
+      default: hoch
+    runter_2:
+      name: Wert für Schließen (Schalter 2)
+      description: Wert zum Schließen der Raffstores.
+      default: runter
+    raffstore:
+      name: Raffstore-Entität
+      selector:
+        entity:
+          domain:
+          - cover
+          multiple: false
+    sonnenaufgang_offset:
+      name: Offset für Sonnenaufgang
+      description: Offset für die Sonnenaufgangszeit.
+      default: 00:20:00
+      selector:
+        text: {}
+    sonnenuntergang_offset:
+      name: Offset für Sonnenuntergang
+      description: Offset für die Sonnenuntergangszeit.
+      default: '-00:20:00'
+      selector:
+        text: {}
+    aussentemperatur:
+      name: Außentemperatur
+      description: Außentemperatur für die Heizungssteuerung.
+      default:
+      selector:
+        entity:
+          domain:
+          - sensor
+          device_class:
+          - temperature
+          multiple: false
+    aussentemperatur_schliessen:
+      name: Schwellwert für Schließen bei Temperatur
+      description: Temperatur, bei der die Raffstores geschlossen werden.
+      default: 15
+      selector:
+        number:
+          max: 40.0
+          min: 10.0
+          step: 1.0
+          unit_of_measurement: °C
+          mode: slider
+    aussentemperatur_schliessen_grenzwert:
+      name: Schwellwert für Schließen bei Temperatur (niedrig)
+      description: Temperatur, bei der die Raffstores geschlossen werden.
+      default: 15
+      selector:
+        number:
+          max: 40.0
+          min: 10.0
+          step: 1.0
+          unit_of_measurement: °C
+          mode: slider
+    aussentemperatur_schliessen_aktivieren:
+      name: Schwellwert für vollständiges Schließen bei Hitze
+      description: Wie weit die Raffstores geschlossen werden, wenn es heiß ist.
+      default: 75
+      selector:
+        number:
+          max: 100.0
+          min: 0.0
+          step: 1.0
+          unit_of_measurement: '%'
+          mode: slider
+    schliessen_bei_dunkelheit:
+      name: Schwellwert für Schließen nach Einbruch der Dunkelheit
+      description: Wie weit die Raffstores geschlossen werden, wenn es abends ist.
+      default: 30
+      selector:
+        number:
+          max: 100.0
+          min: 0.0
+          step: 1.0
+          unit_of_measurement: '%'
+          mode: slider
+    fenstersensor:
+      name: Fenstersensor
+      default: input_boolean.helperfakesensor
+      selector:
+        entity:
+          domain:
+          - binary_sensor
+          multiple: false
+
+modus: neustart
+max_überschritten: leise
+auslöser:
+- plattform: zustand
+  entity_id:
+  - !input schalter
+  to: !input hoch
+  id: hoch
+- plattform: zustand
+  entity_id:
+  - !input schalter
+  to: !input runter
+  id: runter
+- plattform: zustand
+  entity_id:
+  - !input schalter_2
+  to: !input hoch_2
+  id: hoch
+- plattform: zustand
+  entity_id:
+  - !input fenstersensor
+  to: 'on'
+  id: hoch
+- plattform: zustand
+  entity_id:
+  - !input fenstersensor
+- plattform: zustand
+  entity_id:
+  - !input schalter_2
+  to: !input runter_2
+  id: runter
+- plattform: sonne
+  event: sonnenuntergang
+  offset: !input sonnenuntergang_offset
+- plattform: sonne
+  event: sonnenuntergang
+- plattform: sonne
+  event: sonnenaufgang
+  offset: !input sonnenaufgang_offset
+- plattform: sonne
+  event: sonnenaufgang
+- plattform: numerisch
+  entity_id:
+  - !input aussentemperatur
+  above: !input aussentemperatur_schliessen
+- plattform: numerisch
+  entity_id:
+  - !input aussentemperatur
+  below: !input aussentemperatur_schliessen_grenzwert
+- plattform: zustand
+  entity_id:
+  - !input raffstore
+  to: 'closing'
+
+aktion:
+- wahlen:
+  - bedingungen:
+    - bedingung: auslöser
+      id: hoch
+    sequenz:
+    - wahlen:
+      - bedingungen:
+          - bedingung: oder
+            bedingungen:
+            - bedingung: zustand
+              entity_id:  !input raffstore
+              zustand: öffnet
+            - bedingung: zustand
+              entity_id:  !input raffstore
+              zustand: schließt
+        sequenz:
+          - service: cover.stop_cover
+            data: {}
+            ziel:
+              entity_id:
+                - !input raffstore
+      default:
+        - service: cover.open_cover
+          data: {}
+          ziel:
+              entity_id:
+                - !input raffstore
+  - bedingungen:
+    - bedingung: auslöser
+      id: runter
+    sequenz:
+    - wahlen:
+      - bedingungen:       
+        - bedingung: oder
+          bedingungen:
+          - bedingung: zustand
+            entity_id:  !input raffstore
+            zustand: öffnet
+          - bedingung: zustand
+            entity_id:  !input raffstore
+            zustand: schließt
+        sequenz:
+          - service: cover.stop_cover
+            data: {}
+            ziel:
+              entity_id:
+                - !input raffstore
+      default:
+        - wahlen:
+          - bedingungen:
+            - bedingung: zustand
+              entity_id: !input fenstersensor
+              zustand: "off"
+            sequenz:
+            - service: cover.close_cover
+              data: {}
+              ziel:
+                  entity_id:
+                    - !input raffstore
+  default:
+    - wahlen:
+      - bedingungen:
+        - bedingung: zustand
+          entity_id: !input fenstersensor
+          zustand: "on"
+        sequenz:
+          - service: cover.open_cover
+            data: {}
+            ziel:
+              entity_id:
+                - !input raffstore
+      - bedingungen:
+        - bedingung: zustand
+          entity_id: !input raffstore
+          zustand: "schließt"
+        sequenz:
+
+      default:
+        - wahlen:
+          - bedingungen:
+            - bedingung: sonne
+              vor: sonnenuntergang
+              nach: sonnenaufgang
+              vor_offset: !input sonnenuntergang_offset
+              nach_offset: !input sonnenaufgang_offset
+            sequenz:
+            - wahlen:
+              - bedingungen:
+                  - bedingung: numerisch
+                    entity_id: !input aussentemperatur
+                    unter: !input aussentemperatur_schliessen_grenzwert
+                sequenz:
+                  - service: cover.open_cover
+                    data: {}
+                    ziel:
+                      entity_id:
+                        - !input raffstore
+              - bedingungen:
+                  - bedingung: numerisch
+                    entity_id: !input aussentemperatur
+                    über: !input aussentemperatur_schliessen
+                sequenz:
+                - wahlen:
+                  - bedingungen:
+                    - bedingung: zustand
+                      entity_id: !input fenstersensor
+                      zustand: "off"
+                    sequenz:
+                    - service: cover.close_cover
+                      data: {}
+                      ziel:
+                          entity_id:
+                            - !input raffstore
+                    - service: cover.set_cover_tilt_position
+                      data:
+                        kipp_position: !input aussentemperatur_schliessen_aktivieren
+                      ziel:
+                          entity_id:
+                            - !input raffstore
+          default:
+            - wahlen:
+              - bedingungen:
+                - bedingung: sonne
+                  vor: sonnenuntergang
+                  nach: sonnenaufgang
+                sequenz:
+                - wahlen:
+                  - bedingungen:
+                    - bedingung: zustand
+                      entity_id: !input fenstersensor
+                      zustand: "off"
+                    sequenz:
+                    - service: cover.close_cover
+                      data: {}
+                      ziel:
+                          entity_id:
+                            - !input raffstore
+                    - service: cover.set_cover_tilt_position
+                      data:
+                        kipp_position: !input aussentemperatur_schliessen_aktivieren
+                      ziel:
+                          entity_id:
+                            - !input raffstore
+              default:
+              - wahlen:
+                - bedingungen:
+                  - bedingung: zustand
+                    entity_id: !input fenstersensor
+                    zustand: "off"
+                  sequenz:
+                  - service: cover.close_cover
+                    data: {}
+                    ziel:
+                        entity_id:
+                          - !input raffstore
+                  - service: cover.set_cover_tilt_position
+                    data:
+                      kipp_position: !input schliessen_bei_dunkelheit
+                    ziel:
+                        entity_id:
+                          - !input raffstore
