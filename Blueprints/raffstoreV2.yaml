@@ -2,7 +2,7 @@ blueprint:
   name: RaffstoresteuerungV2
   description: Steuert Jalousien basierend auf Sonnenstand, Wind, Regen und manueller Eingabe.
   domain: automation
-  source_url: https://raw.githubusercontent.com/MovingLlama/HomeAssistant/master/Blueprints/raffstore.yaml
+  source_url: https://raw.githubusercontent.com/MovingLlama/HomeAssistant/master/Blueprints/raffstoreV2.yaml
 
 input:
   switch:
