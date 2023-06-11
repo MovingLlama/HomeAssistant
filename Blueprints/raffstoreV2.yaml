@@ -2,7 +2,7 @@ blaufdruck:
   name: Raffstoresteuerung
   description: Steuerung der Raffstores basierend auf Sonnenstand, Wind, Regen und manueller Eingabe.
   domain: automation
-  source_url: https://raw.githubusercontent.com/MovingLlama/HomeAssistant/master/Blueprints/raffstore.yaml
+  source_url: https://github.com/MovingLlama/HomeAssistant/blob/master/Blueprints/raffstoreV2.yaml
   input:
     schalter:
       name: Schalter 1
