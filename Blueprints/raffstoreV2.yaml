@@ -1,4 +1,4 @@
-blaufdruck:
+blueprint:
   name: Raffstoresteuerung
   description: Steuerung der Raffstores basierend auf Sonnenstand, Wind, Regen und manueller Eingabe.
   domain: automation
