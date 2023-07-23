@@ -1,8 +1,8 @@
 blueprint:
-  name: Auto Rolladen
-  description: Rolladensteuerung
+  name: Auto Raffstore
+  description: Raffstoresteuerung
   domain: automation
-  source_url: https://raw.githubusercontent.com/MovingLlama/HomeAssistant/master/Blueprints/AutoRolladen.yaml
+  source_url: https://raw.githubusercontent.com/MovingLlama/HomeAssistant/master/Blueprints/AutoRaffstore.yaml
   input:
     aktiv:
       name: Aktiv
@@ -11,8 +11,8 @@ blueprint:
           domain:
           - input_boolean
           multiple: false
-    rolladen:
-      name: Rolladen
+    raffstore:
+      name: Raffstore
       selector:
         entity:
           domain:
@@ -84,8 +84,8 @@ blueprint:
           step: 1.0
           unit_of_measurement: °C
           mode: slider
-    rolladen_abend:
-      name: Rolladen Abend/Heiß
+    raffstore_abend:
+      name: Raffstore Abend/Heiß
       default: 25
       selector:
         number:
@@ -94,8 +94,8 @@ blueprint:
           step: 5.0
           unit_of_measurement: '%'
           mode: slider
-    rolladen_nacht:
-      name: Rolladen Nacht
+    raffstore_nacht:
+      name: Raffstore Nacht
       default: 0
       selector:
         number:
@@ -202,24 +202,24 @@ action:
             conditions:
             - condition: state
               entity_id: 
-                - !input rolladen
+                - !input raffstore
               state: opening
             - condition: state
               entity_id: 
-                - !input rolladen
+                - !input raffstore
               state: closing
         sequence:
           - service: cover.stop_cover
             data: {}
             target:
               entity_id:
-                - !input rolladen
+                - !input raffstore
       default:
         - service: cover.open_cover
           data: {}
           target:
               entity_id:
-                - !input rolladen
+                - !input raffstore
   - conditions:
     - condition: trigger
       id: zu
@@ -230,24 +230,24 @@ action:
             conditions:
             - condition: state
               entity_id:
-                - !input rolladen
+                - !input raffstore
               state: opening
             - condition: state
               entity_id:
-                - !input rolladen
+                - !input raffstore
               state: closing
         sequence:
           - service: cover.stop_cover
             data: {}
             target:
               entity_id:
-                - !input rolladen
+                - !input raffstore
       default:
         - service: cover.close_cover
           data: {}
           target:
               entity_id:
-                - !input rolladen
+                - !input raffstore
   default:
   - choose:
     - conditions:
@@ -261,19 +261,19 @@ action:
           conditions:
           - condition: state
             entity_id:
-              - !input rolladen
+              - !input raffstore
             state: "closed"
           - condition: state
             entity_id:
-              - !input rolladen
+              - !input raffstore
             state: "closing"
       sequence:
         - service: cover.set_cover_position
           data:
-            position: !input rolladen_abend
+            position: !input raffstore_abend
           target:
             entity_id:
-              - !input rolladen
+              - !input raffstore
     default:
     - choose:
       - conditions:
@@ -296,10 +296,10 @@ action:
         sequence:
           - service: cover.set_cover_position
             data:
-              potion: !input rolladen_abend
+              potion: !input raffstore_abend
             target:
                 entity_id:
-                  - !input rolladen
+                  - !input raffstore
       - conditions:
         - condition: and
           conditions:
@@ -327,7 +327,7 @@ action:
             data: {}
             target:
                 entity_id:
-                  - !input rolladen
+                  - !input raffstore
       - conditions:
         - condition: and
           conditions:
@@ -346,10 +346,10 @@ action:
         sequence:
           - service: cover.set_cover_position
             data:
-              potion: !input rolladen_abend
+              potion: !input raffstore_abend
             target:
                 entity_id:
-                  - !input rolladen
+                  - !input raffstore
       - conditions:
         - condition: and
           conditions:
@@ -366,7 +366,7 @@ action:
         sequence:
           - service: cover.set_cover_position
             data:
-              potion: !input rolladen_nacht
+              potion: !input raffstore_nacht
             target:
                 entity_id:
-                  - !input rolladen
+                  - !input raffstore
